@@ -19,8 +19,8 @@ st.markdown("""
         .stApp {
             background-color: #000000;
             background-image: 
-                radial-gradient(circle at 90% 90%, rgba(0, 212, 72, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 20% 5%, rgba(0, 212, 72, 0.12) 0%, transparent 60%);
+                radial-gradient(circle at 90% 90%, rgba(0, 212, 72, 0.40) 0%, transparent 50%),
+                radial-gradient(circle at 20% 5%, rgba(0, 212, 72, 0.20) 0%, transparent 60%);
             
             background-attachment: fixed;
             color: #FFFFFF;
@@ -1074,3 +1074,4 @@ elif opcion == "3. Modelado (Próximamente)":
 
 elif opcion == "4. SQL (Próximamente)":
     st.write("Espacio reservado para las consultas SQL.")
+
