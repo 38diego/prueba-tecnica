@@ -114,7 +114,7 @@ with st.sidebar:
     st.title("Navegación")
     opcion = st.radio(
         "Ir a:",
-        ["1. Introducción & Data", "2. Análisis Exploratorio (EDA)", "3. Modelado & Predicción", "4. SQL (Próximamente)"]
+        ["1. Introducción & Data", "2. Análisis Exploratorio (EDA)", "3. Modelado & Predicción", "4. SQL"]
     )
     
 # --- LÓGICA DE PÁGINAS ---
@@ -1485,7 +1485,7 @@ autoencoder = MLPRegressor(
 
 
 
-    elif opcion == "4. SQL (Próximamente)":
+    elif opcion == "4. SQL":
 
         st.subheader("💻 Consultas SQL en Vivo")
         st.markdown("Este módulo permite ejecutar sentencias **SQL estándar** directamente sobre el DataFrame de Pandas.")
@@ -1553,4 +1553,5 @@ autoencoder = MLPRegressor(
                 )
             except Exception as e:
                 st.error(f"Error en SQL: {e}")
+
 
