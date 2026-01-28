@@ -675,17 +675,14 @@ if opcion == "1. Introducción & Data":
         ### meses_desde_ultimo_pago 
         """)
 
-        st.info("""
-        La gran barra de valores nulos no es un error de datos, es información y significa que nunca han pagado
-        * En lugar de imputar estos valores, el modelo tratará los Nulos como una categoría explícita -1. Esto por que el comportamiento de alguien que *nunca* ha pagado es estructuralmente distinto al de alguien que pagó hace 6 meses. No se deben mezclar en el análisis.
-        """)
-
         st.error("""
-        **1. El "Abismo" de Recuperación (Mes 3)**
-        Los datos revelan un patrón de comportamiento dramático:
-        * **Mes 1 a 2:** La retención se mantiene estable (206 $\\to$ 191 clientes). El cliente aún está "tibio".
-        * **Mes 2 a 3:** Ocurre una **caída catastrófica del 75%** (de 191 bajamos a solo 47 clientes).
-        * Nuestra **Ventana de Oportunidad es de exactamente 60 días**. Si un cliente interrumpe sus pagos y no logramos reactivarlo en los primeros 2 meses, se convierte en un caso dificil de reactivar.
+        Observamos un fenómeno interesante en la distribución de clientes activos:
+        * **Mes 1 y 2:** Mantenemos un volumen constante de clientes (~200) cuyo último pago fue reciente. Esto indica un comportamiento de pago intermitente pero activo.
+        * El volumen de clientes cuyo último pago fue hace 3 meses cae drásticamente a solo **47 personas**.
+
+        **Interpretación de Riesgo:**
+        En cobranza, el mes 3 suele ser el punto de inflexión donde el hábito de pago se rompe.
+        Quien deja pasar 90 días sin pagar, pierde la costumbre y la prioridad de pago. La gestión debe ser **preventiva antes del Mes 3**. Tratar de reactivar a un cliente que lleva más de 90 días "frío" es exponencialmente más costoso que gestionarlo cuando solo lleva 30 o 60 días.
         """)
 
     with col2:
@@ -719,6 +716,11 @@ if opcion == "1. Introducción & Data":
             
         st.pyplot(fig)
 
+    st.info("""
+        La gran barra de valores nulos no es un error de datos, es información y significa que nunca han pagado
+        * En lugar de imputar estos valores, el modelo tratará los Nulos como una categoría explícita -1. Esto por que el comportamiento de alguien que *nunca* ha pagado es estructuralmente distinto al de alguien que pagó hace 6 meses. No se deben mezclar en el análisis.
+        """)
+
     # 2. Estrategia Operativa (Qué hacer)
     st.success("""
     **2. Estrategia de Intensidad Diferenciada**
@@ -733,49 +735,104 @@ if opcion == "1. Introducción & Data":
 
     with col1:
         st.markdown("""
-        **Variables de Gestión (Operativo):**
-        
-        Estas métricas reflejan la intensidad de la cobranza realizada sobre el cliente.
-        
-        *   **`contacto_mes_actual` / `anterior`**: Cantidad de gestiones recientes.
-        *   **`contacto_ultimos_6meses`**: Historial de insistencia.
-        *   **`duracion_llamadas...`**: Calidad del contacto (tiempo acumulado).
-        
-        Analizamos la distribución general para entender el esfuerzo operativo promedio de la compañía.
+        ### **Variables de Gestión (Operativo):**
         """)
 
-    with col2:
-        variables_gestion = [
-            'contacto_mes_actual', 
-            'contacto_mes_anterior', 
-            'contacto_ultimos_6meses', 
-            'duracion_llamadas_ultimos_6meses'
-        ]
+        # 1. EL PROBLEMA DE CAPACIDAD (Los Donas)
+        st.error("""
+        **1. Diagnóstico de Cobertura: El "Techo" Operativo**
+        Los datos revelan una saturación crítica en la capacidad del Call Center:
+        * **Capacidad Estática (~11%):** La consistencia casi robótica entre la gestión del Mes Actual (10.8%) y el Anterior (10.9%) indica que la operación ha tocado su techo físico. No importa cuánto crezca la mora, el equipo solo tiene manos para cubrir al 11% de la base.
+        """)
 
-        fig, axes = plt.subplots(2, 2, figsize=(10, 8))
-        fig.patch.set_alpha(0.0)
+
+    with col2:
+        # Definimos las variables
+        vars_contacto = ['contacto_mes_actual', 'contacto_mes_anterior', 'contacto_ultimos_6meses']
+        var_duracion = 'duracion_llamadas_ultimos_6meses'
+        
+        # Unimos todas para el loop, pero las trataremos diferente
+        variables_gestion = vars_contacto + [var_duracion]
+
+        fig, axes = plt.subplots(2, 2, figsize=(10, 6))
+        fig.patch.set_alpha(0.0) # Fondo transparente
         axes = axes.flatten()
 
         for i, col in enumerate(variables_gestion):
             ax = axes[i]
             ax.patch.set_alpha(0.0)
 
-            # Violin Plot General (Sin discriminación)
-            sns.violinplot(data=df, y=col, color='#00D448', ax=ax, linewidth=1.5, inner="quartile")
-            
-            # Estilizado
+            # Estilizado del título
             titulo = col.replace('_', ' ').replace('ultimos', 'últ.').title()
             ax.set_title(titulo, color='#00D448', fontsize=12, fontweight='bold')
-            ax.set_ylabel('', color='white')
-            ax.set_xlabel('', color='white')
-            ax.tick_params(axis='y', colors='white', labelsize=9)
-            ax.set_xticks([])
-            for spine in ax.spines.values(): spine.set_visible(False)
+
+            # --- Lógica A: Variable Numérica Continua (Duración) ---
+            if col == var_duracion:
+                # Filtramos solo los mayores a 0
+                data_filtrada = df[df[col] > 0][col]
+                
+                if not data_filtrada.empty:
+                    sns.histplot(data_filtrada, color='#00D448', ax=ax, kde=True, bins=20, element="step", alpha=0.5)
+                    # Ajustes visuales ejes
+                    ax.set_ylabel('Frecuencia', color='white', fontsize=9)
+                    ax.set_xlabel('Segundos', color='white', fontsize=9)
+                    ax.tick_params(axis='both', colors='white', labelsize=8)
+                    for spine in ax.spines.values(): 
+                        spine.set_edgecolor('#444444') # Bordes sutiles
+                        spine.set_visible(True)
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
+                else:
+                    ax.text(0.5, 0.5, "Sin datos > 0", color='white', ha='center')
+
+            # --- Lógica B: Variables Binarias / Conteo (Contactos) ---
+            else:
+                # Creamos la lógica binaria: ¿Tiene gestión (>0) o no (0)?
+                con_gestion = (df[col] == 1).sum()
+                sin_gestion = (df[col] == 0).sum()
+                
+                datos = [con_gestion, sin_gestion]
+                etiquetas = ['Con Gestión', 'Sin Gestión']
+                colores = ['#00D448', '#2e2e2e'] # Verde brillante vs Gris oscuro
+                
+                # Gráfica de Dona
+                wedges, texts, autotexts = ax.pie(
+                    datos, 
+                    labels=etiquetas, 
+                    colors=colores, 
+                    autopct='%1.1f%%', 
+                    startangle=90, 
+                    pctdistance=0.85, 
+                    wedgeprops=dict(width=0.3, edgecolor='none') # width=0.3 hace el agujero
+                )
+                
+                # Estilizar textos de la dona
+                for text in texts:
+                    text.set_color('white')
+                    text.set_fontsize(9)
+                for autotext in autotexts:
+                    autotext.set_color('white')
+                    autotext.set_fontweight('bold')
+                    autotext.set_fontsize(10)
 
         plt.tight_layout()
-        st.pyplot(fig)  
+        st.pyplot(fig)
 
+    # 3. LA SOLUCIÓN REFINADA (Matriz de Valor)
+    st.success("""
+    No basta con mirar solo el Saldo (cuánto debe) ni solo el Modelo (qué tan probable es). La estrategia ganadora cruza ambas variables:
 
+    1.  **Prioridad 1: Los "Golden Geese" (Alto Saldo + Alta Probabilidad):**
+        * Son el **Foco Absoluto** de los asesores humanos. Clientes con deuda significativa (>$2M) que el modelo marca como recuperables. Aquí está el 80% del dinero real.
+
+    2.  **Prioridad 2: Gestión Digital (Bajo Saldo + Alta Probabilidad):**
+        * Clientes que seguramente pagarán, pero deben poco. No gastar tiempo humano costoso; enviar un **Link de Pago por WhatsApp/SMS**. Se recuperan solos.
+
+    3.  **Prioridad 3: Investigación (Alto Saldo + Baja Probabilidad):**
+        * Deudores grandes que el modelo ve difíciles. No quemar llamadas; pasarlos a un equipo de **Investigación de Bienes o Cobro Jurídico**.
+
+    *Conclusión:* El modelo no reemplaza la lógica de negocio, la **potencia** para evitar llamar a deudores grandes pero imposibles.
+    """)
 # PÁGINA 2: EDA (Aquí ponemos tu gráfica estrella)
 elif opcion == "2. Análisis Exploratorio (EDA)":
     st.title("🔍 Análisis Exploratorio de Datos (EDA)")
