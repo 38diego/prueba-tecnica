@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import matplotlib.ticker as ticker
-from statsmodels.stats.outliers_influence import variance_inflation_factor
 import joblib
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
@@ -1554,3 +1553,4 @@ autoencoder = MLPRegressor(
                 )
             except Exception as e:
                 st.error(f"Error en SQL: {e}")
+
